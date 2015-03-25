@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            margin:0;
+            background-color:gray;
+        }
+        canvas {
+            background: white;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas" width="800" height="600"></canvas>
+
+</body>
+</html>
+<script>
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+    
+    var r = 5;
+    var width = canvas.width;
+    var height = canvas.height;
+    
+    var circle = function(x,y) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 2 * Math.PI, false);
+        ctx.fill();
+    };
+    
+    var randomInt = function(max) {
+        return Math.floor(max * Math.random());
+    };
+    
+    var randomColor = function() {
+        var col = [255,255,255].map(randomInt);
+        return "rgb(" + col.join(",") + ")"
+    };
+    
+    var draw = function() {
+        var color = randomColor();
+        ctx.fillStyle = color;
+        var x = width * Math.random();
+        var y = height * Math.random();
+        circle(x,y);
+    };
+    
+    var redraw = function() {
+        draw();
+        requestAnimationFrame(redraw);
+    };
+    
+    redraw();
+
+    var clear = function() {
+        ctx.clearRect(0,0,width,height);
+    };
+
+    // TODO pause/resume button
+    // TODO a way to add global state
+    // TODO an editor for global state
+    // TODO clear button
+    // draw() should be to global function
+</script>

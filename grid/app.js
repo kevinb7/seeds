@@ -1,5 +1,6 @@
 import './canvas_extensions'
 import Grid from './grid'
+import Rx from 'rx'
 
 console.log('starting grid');
 
@@ -27,17 +28,10 @@ var range = function* (min, max) {
 };
 
 
-
-
-
 // assumes that we're starting at 0, 0 and working in the first quadrant
-var grid = new Grid(10, 5, 50);
+var grid = new Grid(3, 3, 100);
 
-// 0-indexing vs 1-indexing
-grid.set(5,5,'blue');
-grid.set(8,3,'blue');
-
-
+// TODO when to use 0-indexing vs 1-indexing
 // TODO using intervals to help specify random numbers
 
 function randomInt(max) {
@@ -45,8 +39,7 @@ function randomInt(max) {
 }
 
 function randomColor() {
-    var col = [255, 255, 255].map(randomInt);
-    return `rgb(${col.join(',')})`;
+    return [255, 255, 255].map(randomInt);
 }
 
 for (let i of range(0, 100)) {
@@ -70,8 +63,13 @@ class GridView {
         for (let [x, y] of cartesian(width, height)) {
             var color = grid.get(x, y);
             if (color) {
-                ctx.fillStyle = color;
-                ctx.fillRect(x * size, y * size, size, size);
+                if (color.join) {
+                    ctx.fillStyle = `rgb(${color.join(',')})`;
+                    ctx.fillRect(x * size, y * size, size, size);
+                } else {
+                    debugger;
+                }
+                
             }
         }
 
@@ -118,16 +116,41 @@ class GridView {
 }
 
 
-var transform = [1, 0, 0, 1, 50, 100];
+var transform = [1, 0, 0, 1, 100, 100];
 
 var gridView = new GridView(grid, transform);
 
 gridView.draw(ctx);
 
-document.addEventListener('click', function(e) {
-    console.log(e.pageX, e.pageY);
-    gridView.getCellAtLocation(e.pageX, e.pageY);
+
+function eventToPoint(event) {
+    return [event.pageX, event.pageY];
+}
+
+
+var downs = Rx.Observable.fromEvent(document, "mousedown").map(eventToPoint);
+var moves = Rx.Observable.fromEvent(document, "mousemove").map(eventToPoint);
+var ups = Rx.Observable.fromEvent(document, "mouseup").map(eventToPoint);
+
+
+function distance(p1, p2) {
+    var dx = p2[0] - p1[0];
+    var dy = p2[1] - p1[1];
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+
+var taps = downs.flatMap(down => {
+    var timer = Rx.Observable.timer(300);
+    return ups.take(1).takeUntil(timer).filter(up => distance(down, up) < 10);
 });
+
+
+taps.subscribe(tap => {
+    console.log(`tap @ (${tap})`);
+    gridView.getCellAtLocation(...tap);
+});
+
 
 //drawGrid(grid);
 
